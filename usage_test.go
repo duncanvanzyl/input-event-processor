@@ -1,4 +1,4 @@
-package input
+package input_test
 
 import (
 	"context"
@@ -7,27 +7,29 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/duncanvanzyl/input-event-processor"
 )
 
-func printEvent(e *Event) {
+func printEvent(e *input.Event) {
 	log.Printf("got event: %v", e)
 }
 
 func Example() {
 	// create processor
-	ip := NewProcessor()
+	ip := input.NewProcessor()
 
 	// register specific event
-	motion := TypeCode{
-		Type: EV_KEY,
-		Code: KEY_SPACE,
+	motion := input.TypeCode{
+		Type: input.EV_KEY,
+		Code: input.KEY_SPACE,
 	}
 	ip.Register(motion, printEvent)
 
 	// register all events of a type
-	dial := TypeCode{
-		Type: EV_REL,
-		Code: REL_CNT,
+	dial := input.TypeCode{
+		Type: input.EV_REL,
+		Code: input.REL_CNT,
 	}
 	ip.Register(dial, printEvent)
 
