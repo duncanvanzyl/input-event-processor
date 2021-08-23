@@ -59,6 +59,7 @@ func TestFromBytes(t *testing.T) {
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			e, err := FromBytes(test.bs)
+
 			if (err != nil) != test.shouldFail {
 				if test.shouldFail {
 					t.Fatalf("should have failed but did not: %v", err)

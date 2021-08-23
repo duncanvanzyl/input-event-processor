@@ -7,47 +7,32 @@ import (
 	"time"
 )
 
-//go:generate stringer -type=EV
-type EV uint16
-
 type Coder interface {
-	Code() CODE
+	Code() Code
 	String() string
 }
 
-type CODE uint16
+type Code uint16
 
-func (c CODE) Code() CODE {
+func (c Code) Code() Code {
 	return c
 }
 
-func (c CODE) String() string {
+func (c Code) String() string {
 	return strconv.Itoa(int(c))
 }
 
-//go:generate stringer -type=REL_CODE
-type REL_CODE CODE
-
-func (c REL_CODE) Code() CODE {
-	return CODE(c)
-}
-
-//go:generate stringer -type=KEY_CODE
-type KEY_CODE CODE
-
-func (c KEY_CODE) Code() CODE {
-	return CODE(c)
-}
+//go:generate go run generator.go https://raw.githubusercontent.com/torvalds/linux/master/include/uapi/linux/input-event-codes.h codes.go
 
 type TypeCode struct {
-	Type EV
+	Type EVCode
 	Code Coder
 }
 
 // Event is a linux subsystem event
 type Event struct {
 	Time  time.Time
-	Type  EV
+	Type  EVCode
 	Code  Coder
 	Value int32
 }
@@ -64,7 +49,7 @@ func FromBytes(bs []byte) (*Event, error) {
 		return nil, ErrDecode{fmt.Sprintf("invalid event: should be %d bytes is %d bytes", 16, len(bs))}
 	}
 
-	ev := EV(binary.LittleEndian.Uint16(bs[8:10]))
+	ev := EVCode(binary.LittleEndian.Uint16(bs[8:10]))
 	if ev >= EV_CNT {
 		return nil, ErrDecode{fmt.Sprintf("invalid event: %v", ev)}
 	}
@@ -74,24 +59,12 @@ func FromBytes(bs []byte) (*Event, error) {
 
 	c := binary.LittleEndian.Uint16(bs[10:12])
 
-	var code Coder
-	switch ev {
-	case EV_REL:
-		code = REL_CODE(c)
-	case EV_KEY:
-		code = KEY_CODE(c)
-	default:
-		code = CODE(c)
-	}
-
-	e := &Event{
+	return &Event{
 		Time:  time.Unix(int64(sec), int64(usec)),
 		Type:  ev,
-		Code:  code,
+		Code:  evCode(ev, c),
 		Value: int32(binary.LittleEndian.Uint32(bs[12:16])),
-	}
-
-	return e, nil
+	}, nil
 }
 
 func (e *Event) String() string {
